@@ -6,9 +6,10 @@ output: html_document
 ---
 
 ```{r}
+# Loading Libraries 
+
 library(tidyverse)
 library(modelr)
-
 library(nycflights13)
 library(lubridate)
 library(splines)
@@ -16,6 +17,8 @@ library(forcats)
 ```
 
 ```{r}
+# Loading& Parsing Data
+
 Accidents_2017 <- read_csv("Data/datagov-uk-6efe5505-941f-45bf-b576-4c1e09b579a1/2017-8.csv", 
                            col_names = c("Reference_Number","Easting","Northing","Vehicles_Num","Accident_Date","Time","Road_Class","Road_Surface",
                                          "Lightning_Cond","Weather_Cond","Vehicle_Type","Casualty_Class","Severity","Gender","Age"), skip = 1)
@@ -76,5 +79,46 @@ ggplot(accident_hour,aes(hour,n))+
 
 ```
 
+```{r}
+Accidents_2017_2 <- Accidents_2017 %>%
+  mutate(year = year(Accidents_Date),
+         month = month(Accidents_Date),
+         day = day(Accidents_Date))
+
+daily <- Accidents_2017_2 %>%
+  group_by(Accidents_Date) %>%
+  summarise(n = n()) %>%
+  mutate(wday = wday(Accidents_Date, label = T, abbr = F))
+
+daily
+
+# Number of flights per day
+
+ggplot(daily, mapping = aes(Accidents_Date, n)) +
+  geom_line()
+
+# Number of flights in each day of the week
+ggplot(daily, mapping = aes(wday, n)) + 
+  geom_boxplot()
+  
+ggplot(daily, mapping = aes(wday, n)) + 
+  geom_bar(stat = "identity")
+
+# Fitting a linear model w/ predictions & residuals
+
+model1 <- lm(n ~ wday, data = daily)
+grid <- daily %>%
+  data_grid(wday) %>%
+  add_predictions(model1, "n")
+ggplot(daily, mapping = aes(wday, n))+
+  geom_boxplot() +
+  geom_point(data = grid, colour = "red", size = 4)
+daily <- daily %>%
+  add_residuals(model1)
+ggplot(data = daily, mapping = aes(Accidents_Date, resid)) +
+  geom_ref_line(h = 0) +
+  geom_line()
+
+```
 
 
