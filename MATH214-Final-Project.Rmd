@@ -35,6 +35,60 @@ Accidents_2017 <- Accidents_2017 %>%
   mutate(Accidents_Date, Time) 
 
 Accidents_2017 <- Accidents_2017[,c(1:4,14,15,5:13)]
+
+
+
+Lightning_Cond <- 
+  str_replace(Accidents_2017$Lightning_Cond,"Darkness: Street lights present and lit and lit","Darkness: Street lights present and lit")
+
+
+
+Road_Class <- str_replace_all(Accidents_2017$Road_Class,
+      c("A.*" = "A","B.*" = "B","M.*" = "M"))
+
+
+
+
+Road_Surface <- str_replace(Accidents_2017$Road_Surface,"^F.*","Snow")
+
+
+
+
+Weather_Cond <- word(Accidents_2017$Weather_Cond,1) 
+Weather_Cond <- str_replace(Weather_Cond,"Fog","Other")
+
+
+Vehicle_Type <- word(Accidents_2017$Vehicle_Type,1)
+Vehicle_Type <- str_replace_all(Vehicle_Type,
+      c(".Private" = "Taxi",
+        "Ca.*" = "Car","Pedal" = "Cycle"))
+Vehicle_Type <- str_replace(Vehicle_Type,"TaxiTaxi", "Taxi")
+
+
+Accidents_2017 <- Accidents_2017 %>% 
+  select(1:6,11:15) %>%
+  mutate(Lightning_Cond,Weather_Cond,Road_Class,Road_Surface,Vehicle_Type,
+         year = year(Accidents_Date),
+         month = month(Accidents_Date),
+         day = day(Accidents_Date),
+         hour = hour(Time),
+         minute = minute(Time))
+
+Atomic <- function(df){
+    for(i in 2:length(df)){
+      
+      if(is.character(df[[i]]) == TRUE){
+         
+        df[[i]] <- as.factor(df[[i]])
+      
+      }else if(is.numeric(df[[i]]) == TRUE){
+          
+        df[[i]] <- as.numeric(df[[i]])
+        } 
+      
+
+    }
+}
 ```
 
 
