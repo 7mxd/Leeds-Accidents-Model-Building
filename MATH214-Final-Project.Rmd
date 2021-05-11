@@ -68,7 +68,7 @@ Vehicle_Type <- str_replace(Vehicle_Type,"TaxiTaxi", "Taxi")
 
 
 Accidents_2017 <- Accidents_2017 %>% 
-  select(1:6,11:15) %>%
+  select(1:6,12:15) %>%
   mutate(Lightning_Cond,Weather_Cond,Road_Class,Road_Surface,Vehicle_Type,
          year = year(Accidents_Date),
          month = month(Accidents_Date),
