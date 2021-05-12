@@ -11,6 +11,7 @@ output: html_document
 # Loading Libraries 
 
 library(tidyverse)
+library(magrittr)
 library(modelr)
 library(nycflights13)
 library(lubridate)
@@ -18,14 +19,15 @@ library(splines)
 library(forcats)
 ```
 
-# 2.1 
+# Introduction and Description
 
-The data describes road accidents across Leeds in the year 2017 provided by data.gov.uk. It includes location,date,time, road settings and casualty information for each accident that transpired during the year. 
+The data describes road accidents across Leeds in the year 2017 provided by `data.gov.uk`. It includes location, date, time, road settings and casualty information for each accident that transpired during the year. 
 
-Reference : https://data.world/datagov-uk/6efe5505-941f-45bf-b576-4c1e09b579a1
+**Reference :** https://data.world/datagov-uk/6efe5505-941f-45bf-b576-4c1e09b579a1
 
 
-# 2.2
+# Data Parsing and Import
+
 ```{r}
 # Loading & Parsing Data
 
@@ -75,11 +77,14 @@ Vehicle_Type <- str_replace(Vehicle_Type,"TaxiTaxi", "Taxi")
 Accidents_2017 <- Accidents_2017 %>% 
   select(1:6,12:15) %>%
   mutate(Lightning_Cond,Weather_Cond,Road_Class,Road_Surface,Vehicle_Type,
-         year = year(Accidents_Date),
-         month = month(Accidents_Date),
-         day = day(Accidents_Date),
-         hour = hour(Time),
-         minute = minute(Time))
+         Year = year(Accidents_Date),
+         Month = month(Accidents_Date),
+         Day = day(Accidents_Date),
+         Hour = hour(Time),
+         Minute = minute(Time),
+         Accidents_DateTime = make_datetime(Year, Month, Day, Hour, Minute))
+
+Accidents_2017 <- Accidents_2017[,c(1:4, 16:20, 5:6, 21, 7:15)]
 
 # Assigning the columns to their proper classes. 
 
@@ -101,52 +106,55 @@ sum(rowSums(is.na(Accidents_2017)))
 ```
 
 ```{r}
-accident_hour <- Accidents_2017 %>%
-  mutate(hour = hour(Time),
-         minute = minute(Time))%>%
-  count(hour) 
+(Accidents_Hour <- Accidents_2017 %>% count(Hour))
 
-accident_hour
+(DoW_Hour <- Accidents_2017 %>% 
+  mutate(day_of_week = wday(Accidents_Date, label = TRUE))%>%
+  count(day_of_week, Hour))
 
+ggplot(Accidents_Hour, mapping = aes(Hour, n)) +
+  geom_line() +
+  geom_point()
 
-dow_hour <- Accidents_2017 %>%
-    mutate(hour = hour(Time),
-         minute = minute(Time),
-         year = year(Accidents_Date),
-           month = month(Accidents_Date),
-     day = day(Accidents_Date),
-     date = make_date(year, month, day),
-     dow = wday(date,label =TRUE))%>%
-  count(dow,hour) 
-
-dow_hour
-  
-
-ggplot(accident_hour,aes(hour,n))+
+ggplot(DoW_Hour, mapping = aes(Hour, n, color = day_of_week))+
   geom_line()+
   geom_point()
 
-ggplot(dow_hour,aes(hour,n,colour = dow))+
-  geom_line()+
-  geom_point()
-
-
-ggplot(accident_hour,aes(hour,n))+
+ggplot(Accidents_Hour, mapping = aes(Hour,n))+
   geom_line()+
   geom_point()+
-  geom_line(data = dow_hour,aes(hour,n,colour = dow))
-
-
-
+  geom_line(data = DoW_Hour, mapping = aes(Hour,n,color = day_of_week))
 ```
 
 ```{r}
-Accidents_2017_2 <- Accidents_2017 %>%
-  mutate(year = year(Accidents_Date),
-         month = month(Accidents_Date),
-         day = day(Accidents_Date))
+# Distribution of Accidents across the course of the day for every day of the year
 
-daily <- Accidents_2017_2 %>%
+Accidents_2017 %>%
+  mutate(Accidents_by_Hour = update(Accidents_DateTime, yday = 1)) %>%
+  ggplot(mapping = aes(Accidents_by_Hour)) +
+  geom_freqpoly(binwidth = 3600) # 5 mins interval 
+
+# Distribution of Accidents across the course of the day for every day (and month) of the year
+
+Accidents_2017 %>%
+  mutate(Accidents_by_Hour = update(Accidents_DateTime, yday = 1),
+         Accidents_by_Month = factor(Month)) %>%
+  ggplot(mapping = aes(Accidents_by_Hour, color = Accidents_by_Month)) +
+  geom_freqpoly(binwidth = 3600) # 1 hour interval
+
+# Distribution of Accidents across the course of the day for every day (and month) of the year w/ y-axis as density
+
+Accidents_2017 %>%
+  mutate(Accidents_by_Hour = update(Accidents_DateTime, yday = 1),
+         Accidents_by_Month = factor(Month)) %>%
+  ggplot(mapping = aes(Accidents_by_Hour, color = Accidents_by_Month)) +
+  geom_freqpoly(mapping = aes(y = ..density..), binwidth = 3600) # 1 hour interval
+
+```
+
+
+```{r}
+daily <- Accidents_2017 %>%
   group_by(Accidents_Date) %>%
   summarise(n = n()) %>%
   mutate(wday = wday(Accidents_Date, label = T, abbr = F))
