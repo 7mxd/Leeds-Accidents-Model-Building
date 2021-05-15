@@ -17,11 +17,13 @@ library(nycflights13)
 library(lubridate)
 library(splines)
 library(forcats)
+library(plotly)
+
 ```
 
 # Introduction and Description
 
-The data describes road accidents across Leeds in the year 2017 provided by `data.gov.uk`. It includes location, date, time, road settings and casualty information for each accident that transpired during the year. 
+The data is provided by `data.gov.uk`. It describes road accidents across `Leeds` in the year `2017`. Between all datasets, this  dataset was selected because it includes around `2,200 accident with 15 variable` that can be easily parsed and explored. Also, we selected this dataset because we believe that there are different questions that can be asked about the data, and that the data can provide interesting answers for our questions. The dataset includes data such as `location`, `date`, `time`, `road setting` and `casualty information` for each accident that transpired during the year.
 
 **Reference :** https://data.world/datagov-uk/6efe5505-941f-45bf-b576-4c1e09b579a1
 
@@ -104,6 +106,40 @@ sum(rowSums(is.na(Accidents_2017)))
 
 # No NA values to explore
 ```
+
+# Exploring Data Analysis
+
+```{r}
+EDA1 <- Accidents_2017 %>%
+  group_by(Gender, Age) %>%
+  summarise(Count = n() ) %>%
+  ungroup() %>%
+  ggplot(mapping = aes(x=Age , y = Count)) +
+  geom_point(alpha = 0.6) + 
+  facet_wrap(~Gender) +
+  ggtitle("Number of Casualties Per Age For Males and Females") +
+  ylab("Number of Casualties") +
+  theme_linedraw()
+
+layout_plot <- function(my_plot, x = -0.055, y = - 0.03){
+  my_plot[['x']][['layout']][['annotations']][[1]][['y']] <- x
+  my_plot[['x']][['layout']][['annotations']][[2]][['x']] <- y
+  my_plot
+}
+
+ggplotly(EDA1) %>% layout_plot
+```
+
+#### The plot shows the relationship between the `Number of Casualities` and their `Age`. In addition, the plot is classified by the `Gender`, therefore; it shows how the relationship differs between males and females.
+
+#### For females, as the age increases the count increases. The count peaks around the mid-20s, then the count declines gradually. The males' graph has a similar shape as the females'. The only difference is that the males' graph has a higher peak and the drop is sharper. 
+
+```{r}
+Accidents_2017 %>%
+  group_by(Gender, Age) %>%
+  summarise(Count = n() )
+```
+
 
 ```{r}
 (Accidents_Hour <- Accidents_2017 %>% count(Hour))
