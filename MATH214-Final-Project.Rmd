@@ -141,26 +141,7 @@ Accidents_2017 %>%
 ```
 
 
-```{r}
-(Accidents_Hour <- Accidents_2017 %>% count(Hour))
 
-(DoW_Hour <- Accidents_2017 %>% 
-  mutate(day_of_week = wday(Accidents_Date, label = TRUE))%>%
-  count(day_of_week, Hour))
-
-ggplot(Accidents_Hour, mapping = aes(Hour, n)) +
-  geom_line() +
-  geom_point()
-
-ggplot(DoW_Hour, mapping = aes(Hour, n, color = day_of_week))+
-  geom_line()+
-  geom_point()
-
-ggplot(Accidents_Hour, mapping = aes(Hour,n))+
-  geom_line()+
-  geom_point()+
-  geom_line(data = DoW_Hour, mapping = aes(Hour,n,color = day_of_week))
-```
 
 ```{r}
 # Distribution of Accidents across the course of the day for every day of the year
@@ -187,6 +168,8 @@ Accidents_2017 %>%
   geom_freqpoly(mapping = aes(y = ..density..), binwidth = 3600) # 1 hour interval
 
 ```
+
+# Sections answering questions
 
 
 ```{r}
@@ -226,3 +209,106 @@ ggplot(data = daily, mapping = aes(Accidents_Date, resid)) +
 
 ```
 
+
+
+#  Does the day of the week affect the time at which accidents happen ?
+
+
+```{r}
+
+
+
+# Let's started by counting the total number of accidents for each hour and visualizing it with ggplot2
+
+
+accident_hour <- Accidents_2017 %>%
+  count(Hour) 
+
+accident_hour
+
+ggplot(accident_hour,aes(Hour,n))+
+  geom_line()+
+  geom_point()
+
+# Let's try to model the relationship between hours and count.
+
+mod1 <- lm(n ~ ns(Hour,1) ,data = accident_hour)
+mod2 <- lm(n ~ ns(Hour,2) ,data = accident_hour)
+mod3 <- lm(n ~ ns(Hour,3) ,data = accident_hour)
+mod4 <- lm(n ~ ns(Hour,4) ,data = accident_hour)
+mod5 <- lm(n ~ ns(Hour,5) ,data = accident_hour)
+mod6 <- lm(n ~ ns(Hour,6) ,data = accident_hour)
+
+grid <- accident_hour %>%
+  data_grid(Hour = seq_range(Hour,n = 50,expand = 0.1)) %>%
+  gather_predictions(mod1,mod2,mod3,mod4,mod5,mod6,.pred = "Y")
+grid
+
+ggplot(accident_hour,aes(Hour,n))+
+  geom_point()+
+  geom_smooth(data = grid,aes(y = Y),colour = "red")+
+  facet_wrap(~ model)
+
+accident_hour <- accident_hour %>%
+  gather_residuals(mod1,mod2,mod3,mod4,mod5,mod6)
+
+ggplot(accident_hour,aes(Hour,resid)) +
+  geom_point()+ geom_ref_line(h = 0)+ geom_smooth()+
+  facet_wrap(~model)
+
+# It seems that as we increase the degrees of freedom, the better our model gets. We will stick with 6 degrees of freedom for the rest of the analysis.
+
+
+# Now we will add a day of the week variable (dow) and visualize the relationship between count and hour for each day of the week.
+
+dow_hour <- Accidents_2017 %>%
+  mutate(dow = wday(Accidents_DateTime,label =TRUE))%>%
+  count(dow,Hour) 
+
+dow_hour
+  
+
+
+ggplot(dow_hour,aes(Hour,n,colour = dow))+
+  geom_line()+
+  geom_point()
+
+# From the graph we notice that Sunday and Saturday have a different shape from the rest of the days. Both have a low count between 6 and 9 am  compared to other days,  Saturday  peaks at an earlier time compared to other days. Moreover, Sunday has a lower count between 4 and 7 pm. The rest of the days have a similar shapes and follow the same trends. I think this is because the Sunday and Saturday are weekend days.
+
+
+
+#Lets use a model to understand the relationship better. 
+
+mod <- lm(n ~ ns(Hour,6) ,data = dow_hour)
+mod1 <- lm(n ~ ns(Hour,6) + dow,data = dow_hour)
+mod2 <- lm(n ~ ns(Hour,6) * dow,data = dow_hour)
+
+grid <- dow_hour %>%
+  data_grid(Hour = seq_range(Hour,n = 50,expand = 0.1),dow) %>%
+  gather_predictions(hour_alone = mod,plus_dow = mod1,multi_dow = mod2,.pred = "Y")
+grid
+
+ggplot(dow_hour,aes(Hour,n))+
+  geom_point()+
+  geom_smooth(data = grid,aes(y = Y),colour = "red")+
+  facet_wrap(~ model)
+
+dow_hour <- dow_hour %>%
+  gather_residuals(hour_alone = mod,plus_dow = mod1,multi_dow = mod2)
+
+ggplot(dow_hour,aes(Hour,resid)) +
+  geom_point()+ geom_ref_line(h = 0)+ geom_smooth()+
+  facet_wrap(~model)
+
+# It looks like mod2 (Hour * day of the week) gives us the plot with the best residuals. Only 5 points from 168 points are outside a distance of 10 residuals.
+
+
+dow_hour %>%
+  filter(model == "multi_dow") %>%
+ggplot(aes(Hour,resid,colour = dow))+
+   geom_ref_line(h = 0) + 
+  geom_point()
+
+
+
+```
