@@ -112,16 +112,16 @@ sum(rowSums(is.na(Accidents_2017)))
 ```{r}
 EDA1 <- Accidents_2017 %>%
   group_by(Gender, Age) %>%
-  summarise(Count = n() ) %>%
+  mutate(Count = n() ) %>%
   ungroup() %>%
-  ggplot(mapping = aes(x=Age , y = Count)) +
+  ggplot(mapping = aes(x=Age , y = Count, color = Severity)) +
   geom_point(alpha = 0.6) + 
   facet_wrap(~Gender) +
   ggtitle("Number of Casualties Per Age For Males and Females") +
   ylab("Number of Casualties") +
   theme_linedraw()
 
-layout_plot <- function(my_plot, x = -0.055, y = - 0.03){
+layout_plot <- function(my_plot, x = -0.057, y = - 0.033){
   my_plot[['x']][['layout']][['annotations']][[1]][['y']] <- x
   my_plot[['x']][['layout']][['annotations']][[2]][['x']] <- y
   my_plot
@@ -130,9 +130,9 @@ layout_plot <- function(my_plot, x = -0.055, y = - 0.03){
 ggplotly(EDA1) %>% layout_plot
 ```
 
-#### The plot shows the relationship between the `Number of Casualities` and their `Age`. In addition, the plot is classified by the `Gender`, therefore; it shows how the relationship differs between males and females.
+The plot shows the relationship between the `Number of Casualities` and their `Age`. In addition, the plot is classified by the `Gender`, therefore; it shows how the relationship differs between males and females.
 
-#### For females, as the age increases the count increases. The count peaks around the mid-20s, then the count declines gradually. The males' graph has a similar shape as the females'. The only difference is that the males' graph has a higher peak and the drop is sharper. 
+For females, as the age increases the count increases. The count peaks around the mid-20s, then the count declines gradually. The males' graph has a similar shape as the females'. The only difference is that the males' graph has a higher peak and the drop is sharper. 
 
 ```{r}
 Accidents_2017 %>%
@@ -140,7 +140,34 @@ Accidents_2017 %>%
   summarise(Count = n() )
 ```
 
+```{r}
+EDA2 <- Accidents_2017 %>%
+  group_by(Casualty_Class, Age) %>%
+  summarise(Count = n() ) %>%
+  ungroup() %>%
+  ggplot(mapping = aes(x=Age , y = Count)) +
+  geom_point(alpha = 0.6) + 
+  geom_smooth()+
+  facet_wrap(~Casualty_Class) +
+  ggtitle("Count against Age based on Casualty class") +
+  ylab("Number of Casualties") +
+  theme_linedraw() 
 
+
+ggplotly(EDA2) %>% layout_plot
+
+```
+
+```{r}
+Accidents_2017 %>%
+  group_by(Casualty_Class,Age) %>%
+  summarise(Count = n() )
+
+
+Accidents_2017 %>%
+  group_by(Casualty_Class) %>%
+  summarise(Count = n() )
+```
 
 
 ```{r}
