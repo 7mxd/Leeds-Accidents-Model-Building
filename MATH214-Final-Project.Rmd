@@ -98,7 +98,8 @@ for(i in 2:length(Accidents_2017)) {
     }
 }
 
-Accidents_2017$Vehicles_Num <- as.factor(Accidents_2017$Vehicles_Num)
+
+map(Accidents_2017,class)
 
 Accidents_2017
 
@@ -155,6 +156,11 @@ EDA2 <- Accidents_2017 %>%
   ylab("Number of Casualties") +
   theme_linedraw() 
 
+layout_plot <- function(my_plot, x = -0.057, y = - 0.033){
+  my_plot[['x']][['layout']][['annotations']][[1]][['y']] <- x
+  my_plot[['x']][['layout']][['annotations']][[2]][['x']] <- y
+  my_plot
+}
 
 ggplotly(EDA2) %>% layout_plot
 
@@ -172,76 +178,8 @@ Accidents_2017 %>%
 ```
 
 
-```{r}
-# Distribution of Accidents across the course of the day for every day of the year
-
-Accidents_2017 %>%
-  mutate(Accidents_by_Hour = update(Accidents_DateTime, yday = 1)) %>%
-  ggplot(mapping = aes(Accidents_by_Hour)) +
-  geom_freqpoly(binwidth = 3600) # 5 mins interval 
-
-# Distribution of Accidents across the course of the day for every day (and month) of the year
-
-Accidents_2017 %>%
-  mutate(Accidents_by_Hour = update(Accidents_DateTime, yday = 1),
-         Accidents_by_Month = factor(Month)) %>%
-  ggplot(mapping = aes(Accidents_by_Hour, color = Accidents_by_Month)) +
-  geom_freqpoly(binwidth = 3600) # 1 hour interval
-
-# Distribution of Accidents across the course of the day for every day (and month) of the year w/ y-axis as density
-
-Accidents_2017 %>%
-  mutate(Accidents_by_Hour = update(Accidents_DateTime, yday = 1),
-         Accidents_by_Month = factor(Month)) %>%
-  ggplot(mapping = aes(Accidents_by_Hour, color = Accidents_by_Month)) +
-  geom_freqpoly(mapping = aes(y = ..density..), binwidth = 3600) # 1 hour interval
-
-```
-
 # Sections answering questions
 
-
-# What affects the number of daily flights?
-
-
-```{r}
-
-
-daily <- Accidents_2017 %>%
-  group_by(Accidents_Date) %>%
-  summarise(n = n()) %>%
-  mutate(wday = wday(Accidents_Date, label = T, abbr = F))
-
-daily
-
-# Number of accidents per day
-
-ggplot(daily, mapping = aes(Accidents_Date, n)) +
-  geom_line()+geom_smooth(se = FALSE)
-
-# Number of accidents in each day of the week
-ggplot(daily, mapping = aes(wday, n)) + 
-  geom_boxplot()
-  
-ggplot(daily, mapping = aes(wday, n)) + 
-  geom_bar(stat = "identity")
-
-# Fitting a linear model w/ predictions & residuals
-
-model1 <- lm(n ~ wday, data = daily)
-grid <- daily %>%
-  data_grid(wday) %>%
-  add_predictions(model1, "n")
-ggplot(daily, mapping = aes(wday, n))+
-  geom_boxplot() +
-  geom_point(data = grid, colour = "red", size = 4)
-daily <- daily %>%
-  add_residuals(model1)
-ggplot(data = daily, mapping = aes(Accidents_Date, resid)) +
-  geom_ref_line(h = 0) +
-  geom_point()
-
-```
 
 # Why does the number of accidents increase towards the end of the year ?
 
@@ -364,6 +302,8 @@ ggplot(Climate,aes(Accidents_Date,resid))+
 
 
 ```
+
+
 
 #  Does the day of the week affect the time at which accidents happen ?
 
