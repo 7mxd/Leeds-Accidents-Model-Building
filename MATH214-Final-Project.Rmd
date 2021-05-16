@@ -454,7 +454,7 @@ ggplotly(Resid_plot5) %>% layout_plot()
 # It looks like mod2 (Hour * day of the week) gives us the plot with the best residuals. Only 5 points from 168 points are outside a distance of 10 residuals.
 
 
-Resid_plot6 <- dow_hour %>%
+dow_hour %>%
   filter(model == "multi_dow") %>%
 ggplot(aes(Hour,resid,colour = dow))+
    geom_ref_line(h = 0) + 
@@ -463,8 +463,6 @@ ggplot(aes(Hour,resid,colour = dow))+
    ggtitle("Residuals against Hour based on model 2")+
   ylab("Residuals")+
   xlab("Hour")
-
-ggplotly(Resid_plot6) 
 
 
 ```
