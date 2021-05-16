@@ -121,8 +121,7 @@ EDA1 <- Accidents_2017 %>%
   geom_point(alpha = 0.6) + 
   facet_wrap(~Gender) +
   ggtitle("Number of Casualties Per Age For Males and Females") +
-  ylab("Number of Casualties") +
-  theme_linedraw()
+  ylab("Number of Casualties") 
 
 layout_plot <- function(my_plot, x = -0.057, y = - 0.033){
   my_plot[['x']][['layout']][['annotations']][[1]][['y']] <- x
@@ -131,17 +130,16 @@ layout_plot <- function(my_plot, x = -0.057, y = - 0.033){
 }
 
 ggplotly(EDA1) %>% layout_plot
+
+Accidents_2017 %>%
+  group_by(Gender, Age) %>%
+  summarise(Count = n() )
 ```
 
 The plot shows the relationship between the `Number of Casualities` and their `Age`. The graph is essential because it helps us identify which age group are more likely to be casualties. In addition, the plot is classified by the `Gender`, therefore; it shows how the relationship differs between males and females.
 
 For females, as the age increases the count increases. The count peaks around the mid-20s, then the count declines gradually. The males' graph has a similar shape as the females'. The only difference is that the males' graph has a higher peak and the drop is sharper.
 
-```{r}
-Accidents_2017 %>%
-  group_by(Gender, Age) %>%
-  summarise(Count = n() )
-```
 
 ```{r}
 EDA2 <- Accidents_2017 %>%
@@ -153,8 +151,7 @@ EDA2 <- Accidents_2017 %>%
   geom_smooth()+
   facet_wrap(~Casualty_Class) +
   ggtitle("Count against Age based on Casualty class") +
-  ylab("Number of Casualties") +
-  theme_linedraw() 
+  ylab("Number of Casualties")
 
 layout_plot <- function(my_plot, x = -0.057, y = - 0.033){
   my_plot[['x']][['layout']][['annotations']][[1]][['y']] <- x
@@ -164,13 +161,7 @@ layout_plot <- function(my_plot, x = -0.057, y = - 0.033){
 
 ggplotly(EDA2) %>% layout_plot
 
-```
 
-The plot shows the relationship between the `Number of Casualities` and the `Age` for each `Casualty class`. This plot is very important as it helps understand which type of casualty each age group is likely to be in a road accidents which we can use to raise awareness for different age groups separately.  
-
-When the casualty is a driver or rider, as the age increase till the mid-30s the count rockets,then the count falls rapidly. The plots for pedestrians and passengers are very similar,the only disparity is that the passengers have a higher peak. It should be highlighted that the number of casualties between the age 20 till mid-50s is awfully high when the casualty is a driver or rider compared to other casualty classes.
-
-```{r}
 Accidents_2017 %>%
   group_by(Casualty_Class,Age) %>%
   summarise(Count = n() )
@@ -179,7 +170,12 @@ Accidents_2017 %>%
 Accidents_2017 %>%
   group_by(Casualty_Class) %>%
   summarise(Count = n() )
+
 ```
+
+The plot shows the relationship between the `Number of Casualities` and the `Age` for each `Casualty class`. This plot is very important as it helps understand which type of casualty each age group is likely to be in a road accidents which we can use to raise awareness for different age groups separately.  
+
+When the casualty is a driver or rider, as the age increase till the mid-30s the count rockets,then the count falls rapidly. The plots for pedestrians and passengers are very similar,the only disparity is that the passengers have a higher peak. It should be highlighted that the number of casualties between the age 20 till mid-50s is awfully high when the casualty is a driver or rider compared to other casualty classes.
 
 
 # Sections Answering Questions
@@ -196,7 +192,11 @@ daily <- Accidents_2017 %>%
 daily
 
 ggplot(daily, mapping = aes(Accidents_Date, n)) +
-  geom_line()+geom_smooth(se = FALSE)
+  geom_line()+
+  geom_smooth()+
+  ggtitle("Number of accidents against Date")+
+  ylab("Number of accidents")+
+  xlab("Date")
 
 # From the plot, we notice that from January till April the number of accidents per day keep decreasing. From April till around August the number of accidents per day stays constant. From August till the end of the year the number generally increases. Why is the number of accidents high at the start and end of the year?. 
 
@@ -210,14 +210,21 @@ grid <- daily %>%
 
 ggplot(daily,aes(Accidents_Date,n))+
   geom_line()+
-  geom_point(aes(y = pred),data = grid,colour = "red")
+  geom_point(aes(y = pred),data = grid,colour = "red")+
+   ggtitle("Number of accidents against Date with predictions")+
+  ylab("Number of accidents")+
+  xlab("Date")
 
 daily <- daily %>%
   add_residuals(mod)
 
 Resid_plot1 <- ggplot(daily,aes(Accidents_Date,resid))+
-  geom_point()+geom_ref_line(h = 0) +
-  geom_smooth() 
+  geom_point()+
+  geom_ref_line(h = 0) +
+  geom_smooth()+
+  xlab("Date")+
+  ylab("Residuals")+
+  ggtitle("Residuals against Date")
 
 ggplotly(Resid_plot1) 
 
@@ -286,7 +293,10 @@ grid <- Climate %>%
 
 ggplot(Climate,aes(Month,n))+
   geom_point()+
-  geom_point(data = grid,aes(y = pred),colour = "red")
+  geom_point(data = grid,aes(y = pred),colour = "red")+
+  ggtitle("Number of accidents against Month with predictions")+
+  ylab("Number of accidents") +
+  xlab("Month")
   
 Climate <- Climate %>%
   add_residuals(mod)
@@ -294,7 +304,12 @@ Climate <- Climate %>%
 Climate
 
 Resid_plot2 <- ggplot(Climate,aes(Month,resid)) +
-  geom_hex()+geom_ref_line(h = 0)+geom_smooth()
+  geom_hex()+
+  geom_ref_line(h = 0)+
+  geom_smooth()+
+  ggtitle("Residuals against Month")+
+  ylab("Residuals")+
+  xlab("Month")
 
 ggplotly(Resid_plot2)
 
@@ -303,8 +318,12 @@ ggplotly(Resid_plot2)
 
 
 Resid_plot3 <- ggplot(Climate,aes(Accidents_Date,resid))+
-  geom_hex()+geom_ref_line(h = 0) +
-  geom_smooth()
+  geom_hex()+
+  geom_ref_line(h = 0) +
+  geom_smooth()+
+   ggtitle("Residuals against Date")+
+  ylab("Residuals")+
+  xlab("Date")
 
 ggplotly(Resid_plot3)
 
@@ -321,7 +340,6 @@ Through the extensive analysis that we did, we found that the number of casualti
 ```{r}
 
 
-
 # Let's started by counting the total number of accidents for each hour and visualizing it with ggplot2
 
 
@@ -332,7 +350,10 @@ accident_hour
 
 ggplot(accident_hour,aes(Hour,n))+
   geom_line()+
-  geom_point()
+  geom_point()+
+  ggtitle("Number of accidents against Hour")+
+  ylab("Number of accidents")+
+  xlab("Hour")
 
 # Let's try to model the relationship between hours and count.
 
@@ -351,14 +372,24 @@ grid
 ggplot(accident_hour,aes(Hour,n))+
   geom_point()+
   geom_smooth(data = grid,aes(y = Y),colour = "red")+
-  facet_wrap(~ model)
+  facet_wrap(~ model)+
+  ggtitle("Number of accidents against Hour with predictions")+
+  ylab("Number of accidents")+
+  xlab("Hour")
+
 
 accident_hour <- accident_hour %>%
   gather_residuals(mod1,mod2,mod3,mod4,mod5,mod6)
 
 Resid_plot4 <- ggplot(accident_hour,aes(Hour,resid)) +
-  geom_point()+ geom_ref_line(h = 0)+ geom_smooth()+
-  facet_wrap(~model)
+  geom_point()+ 
+  geom_ref_line(h = 0)+ 
+  geom_smooth()+
+  facet_wrap(~model)+
+  ggtitle("Residuals against Hour")+
+  ylab("Residuals")+
+  xlab("Hour")
+
 
 ggplotly(Resid_plot4) %>% layout_plot
 
@@ -377,7 +408,12 @@ dow_hour
 ggplot(dow_hour,aes(Hour,n,colour = dow))+
   geom_line()+
   geom_point() +
-  labs(col = "Days of the Week")
+  labs(col = "Days of the Week")+
+  ggtitle("Number of accidents against Hour based on day of the week")+
+  ylab("Number of accidents")+
+  xlab("Hour")
+
+  
 
 # From the graph we notice that Sunday and Saturday have a different shape from the rest of the days. Both have a low count between 6 and 9 am  compared to other days,  Saturday  peaks at an earlier time compared to other days. Moreover, Sunday has a lower count between 4 and 7 pm. The rest of the days have a similar shapes and follow the same trends. I think this is because the Sunday and Saturday are weekend days.
 
@@ -397,14 +433,20 @@ grid
 ggplot(dow_hour,aes(Hour,n))+
   geom_point()+
   geom_smooth(data = grid,aes(y = Y),colour = "red")+
-  facet_wrap(~ model)
+  facet_wrap(~ model)+
+  ggtitle("Number of accidents against Hour with prediction based on model")+
+  ylab("Number of accidents")+
+  xlab("Hour")
 
 dow_hour <- dow_hour %>%
   gather_residuals(hour_alone = mod,plus_dow = mod1,multi_dow = mod2)
 
 Resid_plot5 <- ggplot(dow_hour,aes(Hour,resid)) +
   geom_point()+ geom_ref_line(h = 0)+ geom_smooth()+
-  facet_wrap(~model)
+  facet_wrap(~model)+
+   ggtitle("Residuals against Hour based on model")+
+  ylab("Residuals")+
+  xlab("Hour")
 
 ggplotly(Resid_plot5) %>% layout_plot()
 
@@ -417,7 +459,10 @@ Resid_plot6 <- dow_hour %>%
 ggplot(aes(Hour,resid,colour = dow))+
    geom_ref_line(h = 0) + 
   geom_point() +
-  labs(col = "Days of the Week")
+  labs(col = "Days of the Week")+
+   ggtitle("Residuals against Hour based on model 2")+
+  ylab("Residuals")+
+  xlab("Hour")
 
 ggplotly(Resid_plot6) 
 
@@ -425,3 +470,18 @@ ggplotly(Resid_plot6)
 ```
 
 After the broad analysis we come to the conclusion that the day of the week affects the time at which accidents happen. On workdays, we notice that most accidents happen between 6 and 9 am and between 4 and 7 pm while on weekends they can vary. When we tried to model the relationship between day of the week and the hour at which accidents happen we found that Hour multiplied by day of the week gives us the best plot.We still have a few outliners which could suggest that there is another variable that impacts the time at which accidents happen. Lastly, we found as we increase the degrees of freedom we we're able to model the relationship between Hour and number of accidents better.
+
+
+# Closing Discussion
+
+From the EDA, these are the most interesting findings :
+
+Firstly, The number of accidents per day for each climate is 2.97 when it is raining, 3.3 when it is snowing and 9.2 when the climate is dry. Secondly, most fatal accidents occur between 4 pm and 8 pm and fatal accidents tend to happen to people under the age of 25 more frequently. Thirdly, the number of infants and children casualties is dreadfully high when they are passengers in comparison to other casualty classes. Lastly, after 6 am the number of accidents keeps increasing till 5.30 pm.
+
+From the model building, these are the most interesting findings :
+
+We found as we increase the degrees of freedom we we're able to model the relationship between Hour and number of accidents better. Day of the week affects the hour at which accidents happen but there are other hidden variables that play a role. Climate is the main reason for the increase in the number of accidents towards the end of the year.
+
+Future work we would like to do :
+
+Firstly, we want to explore why do most accidents happen when light is available. The question is thought-provoking and could lead to interesting conclusions. Secondly, after seeing how the climate influences road accidents we want to analyze how the seasons impact the number of road accidents. Thirdly, we want to build a model including all the variables that effect driving conditions to find which variable heavily influences the count of accidents. 
