@@ -98,6 +98,8 @@ for(i in 2:length(Accidents_2017)) {
     }
 }
 
+Accidents_2017$Vehicles_Num <- as.factor(Accidents_2017$Vehicles_Num)
+
 Accidents_2017
 
 # Checking NAs 
@@ -114,7 +116,7 @@ EDA1 <- Accidents_2017 %>%
   group_by(Gender, Age) %>%
   mutate(Count = n() ) %>%
   ungroup() %>%
-  ggplot(mapping = aes(x=Age , y = Count, color = Severity)) +
+  ggplot(mapping = aes(x=Age , y = Count)) +
   geom_point(alpha = 0.6) + 
   facet_wrap(~Gender) +
   ggtitle("Number of Casualties Per Age For Males and Females") +
@@ -199,7 +201,12 @@ Accidents_2017 %>%
 # Sections answering questions
 
 
+# What affects the number of daily flights?
+
+
 ```{r}
+
+
 daily <- Accidents_2017 %>%
   group_by(Accidents_Date) %>%
   summarise(n = n()) %>%
@@ -207,12 +214,12 @@ daily <- Accidents_2017 %>%
 
 daily
 
-# Number of flights per day
+# Number of accidents per day
 
 ggplot(daily, mapping = aes(Accidents_Date, n)) +
-  geom_line()
+  geom_line()+geom_smooth(se = FALSE)
 
-# Number of flights in each day of the week
+# Number of accidents in each day of the week
 ggplot(daily, mapping = aes(wday, n)) + 
   geom_boxplot()
   
@@ -232,11 +239,131 @@ daily <- daily %>%
   add_residuals(model1)
 ggplot(data = daily, mapping = aes(Accidents_Date, resid)) +
   geom_ref_line(h = 0) +
-  geom_line()
+  geom_point()
 
 ```
 
+# Why does the number of accidents increase towards the end of the year ?
 
+```{r}
+
+daily <- Accidents_2017 %>%
+  group_by(Accidents_Date) %>%
+  summarise(n = n()) 
+
+daily
+
+ggplot(daily, mapping = aes(Accidents_Date, n)) +
+  geom_line()+geom_smooth(se = FALSE)
+
+# From the plot, we notice that from January till April the number of accidents per day keep decreasing. From April till around August the number of accidents per day stays constant. From August till the end of the year the number generally increases. Why is the number of accidents high at the start and end of the year?. 
+
+# Let's make a model to boarden our understanding. We will assume that number of accidents has a linear relationship with the variable Accident_Date.
+
+mod <- lm(n ~ Accidents_Date,data = daily)
+
+grid <- daily %>%
+  data_grid(Accidents_Date) %>%
+  add_predictions(mod)
+
+ggplot(daily,aes(Accidents_Date,n))+
+  geom_line()+
+  geom_point(aes(y = pred),data = grid,colour = "red")
+
+daily <- daily %>%
+  add_residuals(mod)
+
+ggplot(daily,aes(Accidents_Date,resid))+
+  geom_point()+geom_ref_line(h = 0) +
+  geom_smooth()
+
+# The model is not very good,it underestimates the January and fourth quarter of the year. 
+
+# Let's see the number of accidents per month and visualize it 
+
+Accidents_by_month <- 
+    Accidents_2017 %>%
+    count(Month)
+    
+
+
+Accidents_by_month
+
+
+# Plot of Accidents per month
+ggplot(data = Accidents_by_month, mapping = aes(x = Month, y = n)) +
+  geom_bar(aes(fill = Month) , show.legend = F, stat = "identity") +
+  ggtitle("Number of Accidents Per Month") +
+  xlab("Month") +
+  ylab("Number of Accidents")
+
+# From the bar chart we understand why our model underestimates the stated months because the actual number of accidents for these months is unusually high.
+
+
+# It is important to note that in Leeds, during January, October, November and December the climate is different to the rest of the year. The weather is very cloudy, the temperature drops and the number of daylight hours are low compared to the rest of the years. Could this be the reason to the high count?. Let's explore the data for these months.
+
+Months <- Accidents_2017%>%
+  filter( Month %in% c(1,9,10,11,12))
+Months
+
+Accidents_2017%>%
+  count(Lightning_Cond)
+
+Months %>%
+  count(Lightning_Cond)
+
+
+Accidents_2017%>%
+  count(Road_Surface)
+Months %>%
+  count(Road_Surface)
+
+
+Accidents_2017%>%
+  count(Weather_Cond)
+Months %>%
+  count(Weather_Cond)
+
+
+# From our data, we see that during January, October, November and December there is a 4.4% increase in accidents in darkness, 8% increase in accidents when the road surface is wet or snow compared to the rest of the year. There was no relevant change in Weather conditions so we will ignore it for now.
+
+# Let's try to model the relationship between road surface and lightning conditions and the count for the months of the year.
+
+Climate <- Accidents_2017 %>%
+  count(Accidents_Date,Month,Road_Surface,Lightning_Cond)
+
+
+mod <- lm(n ~ Road_Surface + Lightning_Cond ,data = Climate)
+
+grid <- Climate %>%
+  data_grid(Month,Road_Surface,Lightning_Cond) %>%
+  add_predictions(mod)
+
+ggplot(Climate,aes(Month,n))+
+  geom_point()+
+  geom_point(data = grid,aes(y = pred),colour = "red")
+  
+Climate <- Climate %>%
+  add_residuals(mod)
+
+Climate
+
+ggplot(Climate,aes(Month,resid)) +
+  geom_hex()+geom_ref_line(h = 0)+geom_smooth()
+
+
+
+#  Although there are some months with huge outliers the model can accurately predict for the month of January and for the fourth quarter of the year. So lets use the residuals on the Accident_Date variable to remove the pattern. 
+
+
+ggplot(Climate,aes(Accidents_Date,resid))+
+  geom_hex()+geom_ref_line(h = 0) +
+  geom_smooth()
+
+# Now we can look at the residuals, which verifies that we’ve substantially  decreased the linear pattern.
+
+
+```
 
 #  Does the day of the week affect the time at which accidents happen ?
 
@@ -337,5 +464,5 @@ ggplot(aes(Hour,resid,colour = dow))+
   geom_point()
 
 
-
 ```
+
