@@ -133,9 +133,9 @@ layout_plot <- function(my_plot, x = -0.057, y = - 0.033){
 ggplotly(EDA1) %>% layout_plot
 ```
 
-The plot shows the relationship between the `Number of Casualities` and their `Age`. In addition, the plot is classified by the `Gender`, therefore; it shows how the relationship differs between males and females.
+The plot shows the relationship between the `Number of Casualities` and their `Age`. The graph is essential because it helps us identify which age group are more likely to be casualties. In addition, the plot is classified by the `Gender`, therefore; it shows how the relationship differs between males and females.
 
-For females, as the age increases the count increases. The count peaks around the mid-20s, then the count declines gradually. The males' graph has a similar shape as the females'. The only difference is that the males' graph has a higher peak and the drop is sharper. 
+For females, as the age increases the count increases. The count peaks around the mid-20s, then the count declines gradually. The males' graph has a similar shape as the females'. The only difference is that the males' graph has a higher peak and the drop is sharper.
 
 ```{r}
 Accidents_2017 %>%
@@ -166,6 +166,10 @@ ggplotly(EDA2) %>% layout_plot
 
 ```
 
+The plot shows the relationship between the `Number of Casualities` and the `Age` for each `Casualty class`. This plot is very important as it helps understand which type of casualty each age group is likely to be in a road accidents which we can use to raise awareness for different age groups separately.  
+
+When the casualty is a driver or rider, as the age increase till the mid-30s the count rockets,then the count falls rapidly. The plots for pedestrians and passengers are very similar,the only disparity is that the passengers have a higher peak. It should be highlighted that the number of casualties between the age 20 till mid-50s is awfully high when the casualty is a driver or rider compared to other casualty classes.
+
 ```{r}
 Accidents_2017 %>%
   group_by(Casualty_Class,Age) %>%
@@ -178,7 +182,7 @@ Accidents_2017 %>%
 ```
 
 
-# Sections answering questions
+# Sections Answering Questions
 
 
 # Why does the number of accidents increase towards the end of the year ?
@@ -211,9 +215,12 @@ ggplot(daily,aes(Accidents_Date,n))+
 daily <- daily %>%
   add_residuals(mod)
 
-ggplot(daily,aes(Accidents_Date,resid))+
+Resid_plot1 <- ggplot(daily,aes(Accidents_Date,resid))+
   geom_point()+geom_ref_line(h = 0) +
-  geom_smooth()
+  geom_smooth() 
+
+ggplotly(Resid_plot1) 
+
 
 # The model is not very good,it underestimates the January and fourth quarter of the year. 
 
@@ -286,24 +293,27 @@ Climate <- Climate %>%
 
 Climate
 
-ggplot(Climate,aes(Month,resid)) +
+Resid_plot2 <- ggplot(Climate,aes(Month,resid)) +
   geom_hex()+geom_ref_line(h = 0)+geom_smooth()
 
+ggplotly(Resid_plot2)
 
 
 #  Although there are some months with huge outliers the model can accurately predict for the month of January and for the fourth quarter of the year. So lets use the residuals on the Accident_Date variable to remove the pattern. 
 
 
-ggplot(Climate,aes(Accidents_Date,resid))+
+Resid_plot3 <- ggplot(Climate,aes(Accidents_Date,resid))+
   geom_hex()+geom_ref_line(h = 0) +
   geom_smooth()
+
+ggplotly(Resid_plot3)
 
 # Now we can look at the residuals, which verifies that we’ve substantially  decreased the linear pattern.
 
 
 ```
 
-
+Through the extensive analysis that we did, we found that the number of casualties increases towards the end of the year because these months have an awful climate which makes it harder to drive. The awful Climate increases the percentage of accidents in the dark and percentage of accidents when the surface of the road is either snowy or wet which leads to higher accidents in these months. When we use a model to remove the effect caused by the climate and visualize the relationship between residuals and `Accidents_dates` we get a good plot. Although the residuals seem a bit biased we were able to decrease the distance between the highest and lowest residual and we got a better smooth line that has a lower confidence interval which proves we are on the right track.
 
 #  Does the day of the week affect the time at which accidents happen ?
 
@@ -346,9 +356,11 @@ ggplot(accident_hour,aes(Hour,n))+
 accident_hour <- accident_hour %>%
   gather_residuals(mod1,mod2,mod3,mod4,mod5,mod6)
 
-ggplot(accident_hour,aes(Hour,resid)) +
+Resid_plot4 <- ggplot(accident_hour,aes(Hour,resid)) +
   geom_point()+ geom_ref_line(h = 0)+ geom_smooth()+
   facet_wrap(~model)
+
+ggplotly(Resid_plot4) %>% layout_plot
 
 # It seems that as we increase the degrees of freedom, the better our model gets. We will stick with 6 degrees of freedom for the rest of the analysis.
 
@@ -362,10 +374,10 @@ dow_hour <- Accidents_2017 %>%
 dow_hour
   
 
-
 ggplot(dow_hour,aes(Hour,n,colour = dow))+
   geom_line()+
-  geom_point()
+  geom_point() +
+  labs(col = "Days of the Week")
 
 # From the graph we notice that Sunday and Saturday have a different shape from the rest of the days. Both have a low count between 6 and 9 am  compared to other days,  Saturday  peaks at an earlier time compared to other days. Moreover, Sunday has a lower count between 4 and 7 pm. The rest of the days have a similar shapes and follow the same trends. I think this is because the Sunday and Saturday are weekend days.
 
@@ -390,19 +402,26 @@ ggplot(dow_hour,aes(Hour,n))+
 dow_hour <- dow_hour %>%
   gather_residuals(hour_alone = mod,plus_dow = mod1,multi_dow = mod2)
 
-ggplot(dow_hour,aes(Hour,resid)) +
+Resid_plot5 <- ggplot(dow_hour,aes(Hour,resid)) +
   geom_point()+ geom_ref_line(h = 0)+ geom_smooth()+
   facet_wrap(~model)
+
+ggplotly(Resid_plot5) %>% layout_plot()
+
 
 # It looks like mod2 (Hour * day of the week) gives us the plot with the best residuals. Only 5 points from 168 points are outside a distance of 10 residuals.
 
 
-dow_hour %>%
+Resid_plot6 <- dow_hour %>%
   filter(model == "multi_dow") %>%
 ggplot(aes(Hour,resid,colour = dow))+
    geom_ref_line(h = 0) + 
-  geom_point()
+  geom_point() +
+  labs(col = "Days of the Week")
+
+ggplotly(Resid_plot6) 
 
 
 ```
 
+After the broad analysis we come to the conclusion that the day of the week affects the time at which accidents happen. On workdays, we notice that most accidents happen between 6 and 9 am and between 4 and 7 pm while on weekends they can vary. When we tried to model the relationship between day of the week and the hour at which accidents happen we found that Hour multiplied by day of the week gives us the best plot.We still have a few outliners which could suggest that there is another variable that impacts the time at which accidents happen. Lastly, we found as we increase the degrees of freedom we we're able to model the relationship between Hour and number of accidents better.
